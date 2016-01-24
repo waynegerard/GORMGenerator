@@ -1,42 +1,68 @@
-package main
+package GORMGenerator
 
 import (
-    "github.com/jinzhu/gorm"
-    _ "github.com/lib/pq"
-    "log"
-    "text/template"
     "bytes"
+    "github.com/jinzhu/gorm"
+    "log"
     "strings"
-    "os"
+    "text/template"
+    _ "github.com/lib/pq"
 )
+
+type DBInfo struct {
+    DBName string
+    DBUser string
+    DBType string
+    DBLogMode bool
+}
+
+type Column struct {
+    Name string
+    Type string
+}
 
 var (
     pgColumnMap map[string]string
 )
 
-func main() {
-    args := os.Args[1:]
-    dbUser := args[0]
-    dbName := args[1]
-    tableNames := args[2:]
+func init() {
+    pgColumnMap = make(map[string]string)
+    pgColumnMap["integer"] = "int"
+    pgColumnMap["character varying"] = "string"
+    pgColumnMap["timestamp without time zone"] = "time.Time"
+    pgColumnMap["boolean"] = "bool"
+    pgColumnMap["double precision"] = "float64"
+    pgColumnMap["text"] = "string"
+}
 
-    db, err := gorm.Open("postgres", "user=" + dbUser + " dbname=" + dbName + " sslmode=disable")
+func openDBHandle(dbInfo DBInfo) gorm.DB {
+    if dbInfo.DBType != "postgres" {
+        log.Println("[WARNING]: GORMGenerator may not work with databases other than postgres. We'll attempt to generate the structs for you, but just be warned.")
+    }
+    db, err := gorm.Open(dbInfo.DBType, "user=" + dbInfo.DBUser +
+    " dbname=" + dbInfo.DBName + " sslmode=disable")
+
     if err != nil {
-      panic(err)
+        log.Println("[ERROR]: ", err)
+        return db
     }
 
-    db.LogMode(true)
+    if dbInfo.DBLogMode {
+        db.LogMode(dbInfo.DBLogMode)
+    }
     db.DB()
 
+
+    /**
     db.DB().Ping()
     db.DB().SetMaxIdleConns(10)
     db.DB().SetMaxOpenConns(100)
-
-    result := generateStructsForTables(db, tableNames)
-    log.Println("Result: ", result)
+    */
+    return db
 }
 
-func generateStructsForTables(db gorm.DB, tableNames []string) string {
+func GenerateStructsForTables(dbInfo DBInfo, tableNames []string) string {
+    db := openDBHandle(dbInfo)
     var structs string = `
         import(
             'time'
@@ -56,17 +82,6 @@ func generateStructsForTables(db gorm.DB, tableNames []string) string {
     }
 
     return structs
-}
-
-
-func init() {
-    pgColumnMap = make(map[string]string)
-    pgColumnMap["integer"] = "int"
-    pgColumnMap["character varying"] = "string"
-    pgColumnMap["timestamp without time zone"] = "time.Time"
-    pgColumnMap["boolean"] = "bool"
-    pgColumnMap["double precision"] = "float64"
-    pgColumnMap["text"] = "string"
 }
 
 func convertColumnNames(columns [][]string) [][]string {
