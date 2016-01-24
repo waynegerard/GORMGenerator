@@ -52,12 +52,6 @@ func openDBHandle(dbInfo DBInfo) gorm.DB {
     }
     db.DB()
 
-
-    /**
-    db.DB().Ping()
-    db.DB().SetMaxIdleConns(10)
-    db.DB().SetMaxOpenConns(100)
-    */
     return db
 }
 

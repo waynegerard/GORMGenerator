@@ -19,3 +19,9 @@ The column types are pretty limited, just based on what I've encountered in my o
 #### No customization
 
 No custom PK columns, etc. right now
+
+## TODO
+
+- Example code
+- Better initialization
+- Column maps need to get cleaned up
