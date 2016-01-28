@@ -22,17 +22,17 @@ type Column struct {
 }
 
 var (
-    pgColumnMap map[string]string
+    columnMap map[string]map[string]string
 )
 
 func init() {
-    pgColumnMap = make(map[string]string)
-    pgColumnMap["integer"] = "int"
-    pgColumnMap["character varying"] = "string"
-    pgColumnMap["timestamp without time zone"] = "time.Time"
-    pgColumnMap["boolean"] = "bool"
-    pgColumnMap["double precision"] = "float64"
-    pgColumnMap["text"] = "string"
+    columnMap = make(map[string]map[string]string)
+    columnMap["postgres"]["integer"] = "int"
+    columnMap["postgres"]["character varying"] = "string"
+    columnMap["postgres"]["timestamp without time zone"] = "time.Time"
+    columnMap["postgres"]["boolean"] = "bool"
+    columnMap["postgres"]["double precision"] = "float64"
+    columnMap["postgres"]["text"] = "string"
 }
 
 func openDBHandle(dbInfo DBInfo) gorm.DB {
@@ -99,7 +99,7 @@ func convertDataTypes(columns [][]string) [][]string {
     // First entry in each array is the column name, second is the data type
     for _,element := range columns {
         columnType := element[1]
-        convertedColumns = append(convertedColumns, []string{element[0], pgColumnMap[columnType]})
+        convertedColumns = append(convertedColumns, []string{element[0], columnMap["postgres"][columnType]})
     }
 
     return convertedColumns
